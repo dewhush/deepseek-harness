@@ -51,5 +51,13 @@ export function canonicalPath(path: string): string {
  */
 export function writableRoots(policy: SandboxExecutionPolicy): string[] {
   if (policy.mode !== 'workspace-write') return []
-  return [...new Set([policy.workspaceRoot, '/tmp', tmpdir()].map(canonicalPath))]
+  const roots = [...new Set([policy.workspaceRoot, '/tmp', tmpdir()].map(canonicalPath))]
+  if (roots.includes('/')) {
+    // A workspace root of "/" is not a confinement: it would make every path on
+    // the host writable, defeating the mode. Callers reach here only through an
+    // unvalidated session/workspace path, so treat the degenerate root as an
+    // error rather than granting the whole filesystem.
+    throw new Error('sandbox roots: a writable root must not be the entire filesystem')
+  }
+  return roots
 }

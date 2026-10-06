@@ -43,4 +43,11 @@ describe('writableRoots', () => {
     // Deduplicated after canonicalization (/tmp and os.tmpdir() may coincide).
     expect(new Set(writable).size).toBe(writable.length)
   })
+
+  it('workspace-write rejects a workspace root that is the entire filesystem', () => {
+    // A session or Workspace path of "/" is unvalidated API input; granting it
+    // would turn workspace-write into full filesystem access. Bail out instead.
+    expect(() => writableRoots({ mode: 'workspace-write', workspaceRoot: '/' }))
+      .toThrow(/entire filesystem/u)
+  })
 })
